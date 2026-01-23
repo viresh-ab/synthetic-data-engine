@@ -21,7 +21,7 @@ st.set_page_config(
     layout="wide"
 )
 
-st.title("🧬 Hybrid Synthetic Data Generator")
+st.title("🧬 Markelytics AI - Synthetic Data Engine")
 st.caption("SDV + GPT LLM + RAG + Faker")
 
 # ------------------ FILE UPLOAD ------------------
