@@ -17,6 +17,10 @@ def merge_outputs(
         df[col] = values
 
     # Reorder columns to match real dataset
-    df = df[column_order]
+    # Keep only columns that actually exist
+    final_cols = [c for c in column_order if c in df.columns]
+
+    df = df[final_cols]
+
 
     return df
