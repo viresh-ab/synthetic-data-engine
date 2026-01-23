@@ -39,7 +39,7 @@ A production-ready **hybrid synthetic data generator** that combines multiple en
                 └───────┬───────┘
                         │
                 ┌───────▼────────┐
-                │ Schema Profiler │
+                │ Schema Profiler│
                 └───────┬────────┘
                         │
      ┌──────────────────┼──────────────────┐
@@ -53,8 +53,8 @@ A production-ready **hybrid synthetic data generator** that combines multiple en
      └──────────┬───────┴───────┬──────────┘
                 │               │
         ┌───────▼───────┐  ┌────▼────────┐
-        │ GPT LLM Engine │  │ Validator   │
-        │ (Text / Q&A)   │  │ & Merger    │
+        │ GPT LLM Engine│  │ Validator   │
+        │ (Text / Q&A)  │  │ & Merger    │
         └───────┬───────┘  └────┬────────┘
                 │               │
                 └───────┬───────┘
