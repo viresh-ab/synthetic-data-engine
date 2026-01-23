@@ -1,20 +1,22 @@
 # 🧬 Hybrid Synthetic Data Platform
 
-A production-ready synthetic data generator that combines:
+A production-ready **hybrid synthetic data generator** that combines multiple engines to produce **accurate, diverse, and privacy-safe synthetic datasets**.
 
-- **SDV** → Numeric & categorical realism
-- **GPT LLMs** → Natural language & survey responses
-- **RAG** → Business & domain constraints
-- **Faker** → Privacy-safe identity generation
+### Core Technologies
+- **SDV** → Numeric & categorical statistical realism  
+- **GPT LLMs** → Natural language & survey responses  
+- **RAG** → Business & domain constraints  
+- **Faker** → Privacy-safe identity (PII) generation  
 
 ---
 
 ## 🚀 Features
 
-- Semantic column understanding
-- Privacy-safe PII handling
-- Non-repetitive text generation
+- Semantic column understanding (not just data types)
+- Privacy-safe PII handling (no memorization or reuse)
+- Non-repetitive, persona-driven text generation
 - Business-rule-aware numeric synthesis
+- Modular, extensible architecture
 - Streamlit UI for easy usage
 
 ---
@@ -23,15 +25,16 @@ A production-ready synthetic data generator that combines:
 
 | Data Type | Engine Used |
 |---------|------------|
-Numeric & categorical | SDV + RAG |
-Names / Emails / IDs | Faker |
-Text / Q&A / Opinions | GPT LLM |
-Validation | Rule + Quality Metrics |
+| Numeric & categorical | SDV + RAG |
+| Names / Emails / IDs | Faker |
+| Text / Q&A / Opinions | GPT LLM |
+| Validation | Rule Engine + Quality Metrics |
 
 ---
 
-## 🏗 File Structure
+## 🏗 Project File Structure
 
+```text
 synthetic-data-platform/
 │
 ├── app.py                    # Streamlit / API entry point
@@ -70,8 +73,6 @@ synthetic-data-platform/
 └── .streamlit/
     └── config.toml           # UI theme & layout
 
----
-
 flowchart TD
     A[Real Input CSV] --> B[Schema Profiler<br/>Semantic Typing]
 
@@ -87,12 +88,3 @@ flowchart TD
     E --> F[Quality Metrics<br/>Similarity & Diversity]
 
     F --> G[Final Synthetic Dataset<br/>CSV Output]
-
-
-
-
-## ▶ How to Run
-
-```bash
-pip install -r requirements.txt
-streamlit run app.py
