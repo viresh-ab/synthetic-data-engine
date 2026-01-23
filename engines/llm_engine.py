@@ -1,33 +1,36 @@
 from openai import OpenAI
+import random
 
 client = OpenAI()
 
 
-def generate_text(prompt: str, num_rows: int):
+def generate_text(prompt: str, n: int):
     """
-    Generate synthetic text using OpenAI Responses API.
-    Returns a list of strings (length = num_rows).
+    Generate n unique responses using batched LLM calls.
     """
 
-    response = client.responses.create(
-        model="gpt-4.1-mini",
-        input=prompt,
-        temperature=0.9
-    )
+    outputs = []
 
-    # Extract text safely
-    output_text = response.output_text
+    for i in range(n):
+        varied_prompt = f"""
+{prompt}
 
-    if not output_text:
-        return [""] * num_rows
+Important:
+- This response must be unique.
+- Do NOT reuse wording from previous responses.
+- Vary sentence length and tone.
+- Answer as a different individual.
 
-    # Split lines into rows
-    lines = [line.strip() for line in output_text.split("\n") if line.strip()]
+Response #{i+1}:
+"""
 
-    # Ensure correct length
-    if len(lines) < num_rows:
-        lines.extend([lines[-1]] * (num_rows - len(lines)))
-    else:
-        lines = lines[:num_rows]
+        response = client.responses.create(
+            model="gpt-4.1-mini",
+            input=varied_prompt,
+            temperature=0.95
+        )
 
-    return lines
+        text = response.output_text.strip()
+        outputs.append(text)
+
+    return outputs
