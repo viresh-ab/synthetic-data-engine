@@ -1,0 +1,8 @@
+streamlit
+pandas
+numpy
+sdv>=1.10
+openai>=1.0.0
+faker
+pyyaml
+scipy
