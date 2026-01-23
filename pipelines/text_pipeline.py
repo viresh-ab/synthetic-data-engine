@@ -5,6 +5,17 @@ import random
 
 from engines.llm_engine import generate_text
 
+def deduplicate(texts):
+    seen = set()
+    final = []
+    for t in texts:
+        if t not in seen:
+            final.append(t)
+            seen.add(t)
+        else:
+            final.append(t + " ")
+    return final
+
 
 def run_text_pipeline(semantic_map, real_df, num_rows):
     base_dir = os.getcwd()
