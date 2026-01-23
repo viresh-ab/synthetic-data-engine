@@ -1,4 +1,4 @@
-# 🧬 Synthetic Data Engine
+# 🚀 Synthetic Data Engine
 A production-ready **hybrid synthetic data generator** that combines multiple engines to produce **accurate, diverse, and privacy-safe synthetic datasets**.
 
 ### Core Technologies
@@ -20,7 +20,7 @@ A production-ready **hybrid synthetic data generator** that combines multiple en
 
 ---
 
-## 🏗 Architecture Overview
+## 🚀 Architecture Overview
 
 | Data Type | Engine Used |
 |---------|------------|
@@ -31,7 +31,7 @@ A production-ready **hybrid synthetic data generator** that combines multiple en
 
 ---
 
-## 🏗 High-Level System Architecture
+## 🚀 High-Level System Architecture
 
 ```text
                 ┌───────────────┐
@@ -65,7 +65,7 @@ A production-ready **hybrid synthetic data generator** that combines multiple en
 ```
 ---
 
-## 🏗 SDE File Structure
+## 🚀 SDE File Structure
 ```text
 synthetic-data-platform/
 │
