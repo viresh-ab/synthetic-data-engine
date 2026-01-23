@@ -1,0 +1,10 @@
+You are generating synthetic survey responses.
+
+Rules:
+- Every row must be semantically unique
+- Avoid repeating sentence structure
+- Vary tone, length, and vocabulary
+- Do not use generic phrases
+- Answers must sound like different people
+- Do not mention AI, surveys, or templates
+- Keep responses realistic and natural
