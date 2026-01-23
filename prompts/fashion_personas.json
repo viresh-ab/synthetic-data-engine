@@ -1,0 +1,26 @@
+[
+  {
+    "name": "College Student",
+    "traits": [
+      "budget-conscious",
+      "trend-aware",
+      "influenced by social media"
+    ]
+  },
+  {
+    "name": "Working Professional",
+    "traits": [
+      "comfort-focused",
+      "brand-loyal",
+      "time-constrained"
+    ]
+  },
+  {
+    "name": "Fashion Enthusiast",
+    "traits": [
+      "experimental",
+      "trend-setting",
+      "detail-oriented"
+    ]
+  }
+]
