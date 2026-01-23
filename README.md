@@ -73,7 +73,6 @@ synthetic-data-platform/
 ├── app.py                    # Streamlit / API entry point
 ├── config.yaml               # Global configuration
 ├── requirements.txt          # Dependencies
-├── README.md                 # Project documentation
 │
 ├── schema/                   # Step 1: Schema understanding
 │   ├── schema_profiler.py    # Semantic column classification
