@@ -1,0 +1,17 @@
+Q1_Fashion_Interest:
+  style: expressive
+  length: medium
+  instruction: >
+    Describe personal fashion preferences naturally.
+
+Purchase_Influence:
+  style: analytical
+  length: short
+  instruction: >
+    Explain what mainly influences purchase decisions.
+
+Brand_Loyalty:
+  style: reflective
+  length: medium
+  instruction: >
+    Talk about brand attachment honestly.
