@@ -32,9 +32,38 @@ A production-ready **hybrid synthetic data generator** that combines multiple en
 
 ---
 
-## 🏗 Project File Structure
+## 🏗 High-Level System Architecture
 
 ```text
+                ┌───────────────┐
+                │  Real Dataset │
+                └───────┬───────┘
+                        │
+                ┌───────▼────────┐
+                │ Schema Profiler │
+                └───────┬────────┘
+                        │
+     ┌──────────────────┼──────────────────┐
+     │                  │                  │
+┌────▼────┐        ┌────▼────┐        ┌────▼────┐
+│ SDV     │        │ RAG     │        │ Faker   │
+│ Engine  │        │ Engine  │        │ Engine  │
+│ (Stats) │        │ (Rules) │        │ (PII)   │
+└────┬────┘        └────┬────┘        └────┬────┘
+     │                  │                  │
+     └──────────┬───────┴───────┬──────────┘
+                │               │
+        ┌───────▼───────┐  ┌────▼────────┐
+        │ GPT LLM Engine │  │ Validator   │
+        │ (Text / Q&A)   │  │ & Merger    │
+        └───────┬───────┘  └────┬────────┘
+                │               │
+                └───────┬───────┘
+                        ▼
+                ┌────────────────┐
+                │ Synthetic Data │
+                └────────────────┘
+
 synthetic-data-platform/
 │
 ├── app.py                    # Streamlit / API entry point
@@ -73,18 +102,3 @@ synthetic-data-platform/
 └── .streamlit/
     └── config.toml           # UI theme & layout
 
-flowchart TD
-    A[Real Input CSV] --> B[Schema Profiler<br/>Semantic Typing]
-
-    B --> C1[Numeric Pipeline<br/>SDV + RAG]
-    B --> C2[Text Pipeline<br/>GPT LLM + Personas]
-    B --> C3[PII Pipeline<br/>Faker]
-
-    C1 --> D[Hybrid Merger]
-    C2 --> D
-    C3 --> D
-
-    D --> E[Validation Layer<br/>Schema + Rules]
-    E --> F[Quality Metrics<br/>Similarity & Diversity]
-
-    F --> G[Final Synthetic Dataset<br/>CSV Output]
