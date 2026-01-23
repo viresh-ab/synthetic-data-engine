@@ -1,78 +1,125 @@
 import sys
 import os
+
+# Ensure project root is in Python path (Streamlit Cloud safe)
 sys.path.append(os.getcwd())
 
 import streamlit as st
 import pandas as pd
 
-# --- Imports from your architecture ---
+# --- Architecture imports ---
 from schema.schema_profiler import infer_semantic_type
 from pipelines.numeric_pipeline import run_numeric_pipeline
 from pipelines.pii_pipeline import run_pii_pipeline
 from pipelines.text_pipeline import run_text_pipeline
 from pipelines.hybrid_pipeline import merge_outputs
 
-st.set_page_config(page_title="Synthetic Data Platform", layout="wide")
+
+# ------------------ UI CONFIG ------------------
+st.set_page_config(
+    page_title="Synthetic Data Platform",
+    layout="wide"
+)
 
 st.title("🧬 Hybrid Synthetic Data Generator")
-st.write("SDV + GPT LLM + RAG + Faker")
+st.caption("SDV + GPT LLM + RAG + Faker")
 
-uploaded_file = st.file_uploader("Upload CSV file", type=["csv"])
+# ------------------ FILE UPLOAD ------------------
+uploaded_file = st.file_uploader(
+    "Upload CSV file",
+    type=["csv"]
+)
 
-if uploaded_file:
+if uploaded_file is None:
+    st.info("Please upload a CSV file to begin.")
+    st.stop()
+
+# ------------------ READ INPUT ------------------
+try:
     real_df = pd.read_csv(uploaded_file)
-    st.subheader("Real Data Preview")
-    st.dataframe(real_df.head())
+except Exception as e:
+    st.error(f"Failed to read CSV: {e}")
+    st.stop()
 
-    num_rows = st.number_input(
-        "Number of synthetic rows",
-        min_value=10,
-        max_value=10000,
-        value=100
-    )
+st.subheader("📄 Real Data Preview")
+st.dataframe(real_df.head())
 
-    if st.button("Generate Synthetic Data"):
-        with st.spinner("Generating synthetic data..."):
+# ------------------ USER INPUT ------------------
+num_rows = st.number_input(
+    "Number of synthetic rows",
+    min_value=10,
+    max_value=10000,
+    value=100,
+    step=10
+)
 
-            # STEP 1: Semantic schema
+# ------------------ GENERATION ------------------
+if st.button("Generate Synthetic Data", type="primary"):
+    with st.spinner("Generating synthetic data..."):
+
+        # STEP 1: Semantic schema inference
+        try:
             semantic_map = {
                 col: infer_semantic_type(real_df[col])
                 for col in real_df.columns
             }
+        except Exception as e:
+            st.error(f"Schema profiling failed: {e}")
+            st.stop()
 
-            # STEP 2: Numeric pipeline (SDV + RAG)
+        # STEP 2: Numeric pipeline (SDV + RAG)
+        try:
             numeric_df = run_numeric_pipeline(
-                real_df, semantic_map, num_rows
+                real_df,
+                semantic_map,
+                num_rows
             )
+        except Exception as e:
+            st.error(f"Numeric pipeline failed: {e}")
+            st.stop()
 
-            # STEP 3: PII pipeline (Faker)
+        # STEP 3: PII pipeline (Faker)
+        try:
             pii_data = run_pii_pipeline(
-                semantic_map, num_rows
+                semantic_map,
+                num_rows
             )
+        except Exception as e:
+            st.error(f"PII pipeline failed: {e}")
+            st.stop()
 
-            # STEP 4: Text pipeline (GPT LLM)
+        # STEP 4: Text pipeline (GPT LLM)
+        try:
             text_data = run_text_pipeline(
                 semantic_map,
                 real_df,
                 num_rows
             )
+        except Exception as e:
+            st.error(f"Text pipeline failed: {e}")
+            st.stop()
 
-            # STEP 5: Merge everything
+        # STEP 5: Merge everything
+        try:
             synthetic_df = merge_outputs(
-                numeric_df,
-                pii_data,
-                text_data,
+                numeric_df=numeric_df,
+                pii_data=pii_data,
+                text_data=text_data,
                 column_order=real_df.columns.tolist()
             )
+        except Exception as e:
+            st.error(f"Merge failed: {e}")
+            st.stop()
 
-            st.success("Synthetic data generated successfully!")
+    # ------------------ OUTPUT ------------------
+    st.success("✅ Synthetic data generated successfully!")
 
-            st.subheader("Synthetic Data Preview")
-            st.dataframe(synthetic_df.head())
+    st.subheader("🧪 Synthetic Data Preview")
+    st.dataframe(synthetic_df.head())
 
-            st.download_button(
-                "Download Synthetic CSV",
-                synthetic_df.to_csv(index=False),
-                file_name="synthetic_data.csv",
-                mime="text/csv"
-            )
+    st.download_button(
+        label="⬇ Download Synthetic CSV",
+        data=synthetic_df.to_csv(index=False),
+        file_name="synthetic_data.csv",
+        mime="text/csv"
+    )
