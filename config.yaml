@@ -1,0 +1,15 @@
+llm:
+  model: gpt-4.1-mini
+  temperature: 0.9
+  top_p: 0.95
+  presence_penalty: 0.6
+  batch_size: 50
+
+faker:
+  locale: en_IN
+
+numeric:
+  max_rows: 10000
+
+rag:
+  enabled: true
