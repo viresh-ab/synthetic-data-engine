@@ -1,5 +1,4 @@
-# 🧬 Hybrid Synthetic Data Platform
-
+# 🧬 Synthetic Data Engine
 A production-ready **hybrid synthetic data generator** that combines multiple engines to produce **accurate, diverse, and privacy-safe synthetic datasets**.
 
 ### Core Technologies
