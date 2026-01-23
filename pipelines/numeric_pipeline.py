@@ -24,3 +24,6 @@ def run_numeric_pipeline(real_df, semantic_map, num_rows):
     )
 
     return synthetic_numeric
+
+if df_numeric.empty:
+    return pd.DataFrame(index=range(num_rows))
