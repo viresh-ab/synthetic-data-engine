@@ -1,0 +1,12 @@
+# LLM settings
+LLM_MODEL = "gpt-4.1-mini"
+LLM_TEMPERATURE = 0.9
+LLM_TOP_P = 0.95
+LLM_PRESENCE_PENALTY = 0.6
+
+# Batch sizes
+TEXT_BATCH_SIZE = 50
+NUMERIC_BATCH_SIZE = 500
+
+# Faker
+DEFAULT_LOCALE = "en_IN"
