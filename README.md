@@ -9,7 +9,7 @@ A production-ready **hybrid synthetic data generator** that combines multiple en
 
 ---
 
-## 🚀 Features
+## 1️⃣ Features
 
 - Semantic column understanding (not just data types)
 - Privacy-safe PII handling (no memorization or reuse)
@@ -20,7 +20,7 @@ A production-ready **hybrid synthetic data generator** that combines multiple en
 
 ---
 
-## 🚀 Architecture Overview
+## 2️⃣ Architecture Overview
 
 | Data Type | Engine Used |
 |---------|------------|
@@ -31,7 +31,7 @@ A production-ready **hybrid synthetic data generator** that combines multiple en
 
 ---
 
-## 🚀 High-Level System Architecture
+## 3️⃣ High-Level System Architecture
 
 ```text
                 ┌───────────────┐
@@ -65,7 +65,8 @@ A production-ready **hybrid synthetic data generator** that combines multiple en
 ```
 ---
 
-## 🚀 SDE File Structure
+## 4️⃣ SDE File Structure
+
 ```text
 synthetic-data-platform/
 │
