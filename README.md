@@ -62,11 +62,11 @@ A production-ready **hybrid synthetic data generator** that combines multiple en
                 ┌────────────────┐
                 │ Synthetic Data │
                 └────────────────┘
-text```
+```
 ---
 
-## 🏗 High-Level System Architecture
-
+## 🏗 SDE File Structure
+```text
 synthetic-data-platform/
 │
 ├── app.py                    # Streamlit / API entry point
