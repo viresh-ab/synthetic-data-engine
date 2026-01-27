@@ -85,7 +85,8 @@ if st.button("Generate Synthetic Data", type="primary"):
         try:
             pii_data = run_pii_pipeline(
                 semantic_map=semantic_map,
-                num_rows=num_rows
+                num_rows=num_rows,
+                base_df=numeric_df   # <-- IMPORTANT
             )
         except Exception as e:
             st.error(f"PII pipeline failed: {e}")
