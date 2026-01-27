@@ -1,28 +1,57 @@
 import pandas as pd
 
-def apply_numeric_rules(df, constraints):
+
+def apply_numeric_rules(df: pd.DataFrame, constraints: dict) -> pd.DataFrame:
+    """
+    Apply business and sanity rules to numeric synthetic data.
+    Rules are corrective (clip/adjust), never destructive.
+    """
+
     df = df.copy()
 
-    if "Age" not in df.columns:
-        # Dataset has no age → skip age-based rules safely
-        return df
+    # ----------------- Column presence checks -----------------
+    has_age = "Age" in df.columns
+    has_spend = "Monthly_Spend" in df.columns
+    has_income = "Monthly_Income" in df.columns
 
-    for i, row in df.iterrows():
-        age = row.get("Age")
+    # ----------------- AGE BOUNDS -----------------
+    if has_age:
+        min_age = constraints.get("min_age", 15)
+        max_age = constraints.get("max_age", 65)
 
-        if pd.isna(age):
-            continue
+        df["Age"] = df["Age"].clip(lower=min_age, upper=max_age)
 
-        if age < 22 and "Monthly_Spend" in df.columns:
-            df.at[i, "Monthly_Spend"] = min(
-                row["Monthly_Spend"],
-                constraints.get("student_spend_max", row["Monthly_Spend"])
-            )
+    # ----------------- AGE ↔ SPEND RULES -----------------
+    if has_age and has_spend:
+        student_max = constraints.get("student_spend_max", 3000)
+        professional_min = constraints.get("professional_spend_min", 2000)
 
-        if age > 30 and "Monthly_Spend" in df.columns:
-            df.at[i, "Monthly_Spend"] = max(
-                row["Monthly_Spend"],
-                constraints.get("professional_spend_min", row["Monthly_Spend"])
-            )
+        # Students / young users
+        young_mask = df["Age"] < 22
+        df.loc[young_mask, "Monthly_Spend"] = (
+            df.loc[young_mask, "Monthly_Spend"]
+            .clip(upper=student_max)
+        )
+
+        # Working professionals
+        professional_mask = df["Age"] >= 30
+        df.loc[professional_mask, "Monthly_Spend"] = (
+            df.loc[professional_mask, "Monthly_Spend"]
+            .clip(lower=professional_min)
+        )
+
+    # ----------------- SPEND VS INCOME -----------------
+    if has_spend and has_income:
+        ratio = constraints.get("max_spend_ratio", 0.2)
+
+        max_allowed_spend = df["Monthly_Income"] * ratio
+
+        df["Monthly_Spend"] = df[
+            ["Monthly_Spend", max_allowed_spend]
+        ].min(axis=1)
+
+    # ----------------- NON-NEGATIVE SAFETY -----------------
+    for col in df.select_dtypes(include="number").columns:
+        df[col] = df[col].clip(lower=0)
 
     return df
