@@ -13,6 +13,7 @@ from pipelines.numeric_pipeline import run_numeric_pipeline
 from pipelines.pii_pipeline import run_pii_pipeline
 from pipelines.text_pipeline import run_text_pipeline
 from pipelines.hybrid_pipeline import merge_outputs
+
 from validation.schema_validator import validate_schema
 from validation.quality_metrics import generate_quality_report
 
@@ -23,8 +24,8 @@ st.set_page_config(
     layout="wide"
 )
 
-st.title("🧬 Markelytics AI – Synthetic Data Engine")
-st.caption("SDV + GPT + RAG + Faker (Production-safe)")
+st.title("🧬 Synthetic Data Engine")
+st.caption("SDV + GPT + RAG + Faker (Row-coherent & Domain-safe)")
 
 # ------------------ FILE UPLOAD ------------------
 uploaded_file = st.file_uploader(
@@ -60,7 +61,7 @@ if st.button("Generate Synthetic Data", type="primary"):
 
     with st.spinner("Generating synthetic data..."):
 
-        # STEP 1: Semantic schema inference
+        # -------- STEP 1: Schema profiling --------
         try:
             semantic_map = {
                 col: infer_semantic_type(real_df[col])
@@ -70,7 +71,7 @@ if st.button("Generate Synthetic Data", type="primary"):
             st.error(f"Schema profiling failed: {e}")
             st.stop()
 
-        # STEP 2: Numeric pipeline (SDV + Rules)
+        # -------- STEP 2: Numeric + categorical + date --------
         try:
             numeric_df = run_numeric_pipeline(
                 real_df=real_df,
@@ -81,41 +82,53 @@ if st.button("Generate Synthetic Data", type="primary"):
             st.error(f"Numeric pipeline failed: {e}")
             st.stop()
 
-        # STEP 3: PII pipeline (Faker)
+        # -------- STEP 3: PII (gender-aware) --------
         try:
             pii_data = run_pii_pipeline(
                 semantic_map=semantic_map,
                 num_rows=num_rows,
-                base_df=numeric_df   # <-- IMPORTANT
+                base_df=numeric_df   # <-- contains Gender
             )
         except Exception as e:
             st.error(f"PII pipeline failed: {e}")
             st.stop()
 
-        # STEP 4: Text pipeline (GPT)
+        # -------- STEP 4: Merge numeric + PII --------
+        try:
+            synthetic_df = merge_outputs(
+                numeric_df=numeric_df,
+                pii_data=pii_data,
+                text_data={},  # text added next
+                column_order=real_df.columns.tolist()
+            )
+        except Exception as e:
+            st.error(f"Merge (numeric + PII) failed: {e}")
+            st.stop()
+
+        # -------- STEP 5: Text (row-aware GPT) --------
         try:
             text_data = run_text_pipeline(
                 semantic_map=semantic_map,
-                real_df=real_df,
+                base_df=synthetic_df,  # <-- row-coherent
                 num_rows=num_rows
             )
         except Exception as e:
             st.error(f"Text pipeline failed: {e}")
             st.stop()
 
-        # STEP 5: Merge outputs
+        # -------- STEP 6: Final merge --------
         try:
             synthetic_df = merge_outputs(
-                numeric_df=numeric_df,
-                pii_data=pii_data,
+                numeric_df=synthetic_df,
+                pii_data={},
                 text_data=text_data,
                 column_order=real_df.columns.tolist()
             )
         except Exception as e:
-            st.error(f"Merge failed: {e}")
+            st.error(f"Final merge failed: {e}")
             st.stop()
 
-        # STEP 6: Schema validation
+        # -------- STEP 7: Schema validation --------
         try:
             validate_schema(real_df, synthetic_df)
         except Exception as e:
