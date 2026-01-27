@@ -1,36 +1,34 @@
 from openai import OpenAI
-import random
 
 client = OpenAI()
 
 
-def generate_text(prompt: str, n: int):
+def generate_text(prompt, n: int):
     """
-    Generate n unique responses using batched LLM calls.
+    Supports:
+    - single prompt (str)
+    - list of prompts (List[str])
     """
 
+    if isinstance(prompt, list):
+        outputs = []
+        for p in prompt:
+            response = client.responses.create(
+                model="gpt-4.1-mini",
+                input=p,
+                temperature=0.9
+            )
+            outputs.append(response.output_text.strip())
+        return outputs
+
+    # fallback (single prompt)
     outputs = []
-
-    for i in range(n):
-        varied_prompt = f"""
-{prompt}
-
-Important:
-- This response must be unique.
-- Do NOT reuse wording from previous responses.
-- Vary sentence length and tone.
-- Answer as a different individual.
-
-Response #{i+1}:
-"""
-
+    for _ in range(n):
         response = client.responses.create(
             model="gpt-4.1-mini",
-            input=varied_prompt,
-            temperature=0.95
+            input=prompt,
+            temperature=0.9
         )
-
-        text = response.output_text.strip()
-        outputs.append(text)
+        outputs.append(response.output_text.strip())
 
     return outputs
