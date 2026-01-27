@@ -10,16 +10,19 @@ from schema.column_types import SemanticType
 
 def run_numeric_pipeline(real_df, semantic_map, num_rows):
     """
-    Generates synthetic numeric, categorical, and date data
-    using SDV + RAG + rule enforcement.
+    Generates synthetic numeric, categorical, and date data.
+    - Numeric → SDV
+    - Categorical → sampled ONLY from real values
+    - Date → uniform sampling within real range
     """
 
     numeric_cols = []
     categorical_cols = []
     date_cols = []
 
-    # ----------------- Column classification -----------------
+    # ----------------- Column routing -----------------
     for col, sem in semantic_map.items():
+
         if sem in (
             SemanticType.NUMERIC_CONTINUOUS,
             SemanticType.NUMERIC_DISCRETE,
@@ -38,8 +41,13 @@ def run_numeric_pipeline(real_df, semantic_map, num_rows):
     if numeric_cols:
         numeric_real = real_df[numeric_cols].copy()
 
-        # SDV cannot handle NaNs well
-        numeric_real = numeric_real.fillna(numeric_real.median(numeric_only=True))
+        # SDV safety
+        numeric_real = numeric_real.apply(
+            pd.to_numeric, errors="coerce"
+        )
+        numeric_real = numeric_real.fillna(
+            numeric_real.median(numeric_only=True)
+        )
 
         synthetic_numeric = generate_numeric_data(
             df_numeric=numeric_real,
@@ -48,17 +56,20 @@ def run_numeric_pipeline(real_df, semantic_map, num_rows):
 
         synthetic_df[numeric_cols] = synthetic_numeric[numeric_cols]
 
-    # ----------------- CATEGORICAL -----------------
+    # ----------------- CATEGORICAL (STRICT DOMAIN) -----------------
     for col in categorical_cols:
-        value_probs = (
-            real_df[col]
-            .value_counts(normalize=True, dropna=True)
-        )
+        values = real_df[col].dropna()
+
+        if values.empty:
+            synthetic_df[col] = None
+            continue
+
+        probs = values.value_counts(normalize=True)
 
         synthetic_df[col] = np.random.choice(
-            value_probs.index,
+            probs.index.tolist(),
             size=num_rows,
-            p=value_probs.values
+            p=probs.values
         )
 
     # ----------------- DATE -----------------
@@ -69,11 +80,11 @@ def run_numeric_pipeline(real_df, semantic_map, num_rows):
         ).dropna()
 
         if real_dates.empty:
+            synthetic_df[col] = None
             continue
 
         min_date = real_dates.min()
         max_date = real_dates.max()
-
         delta_days = (max_date - min_date).days
 
         synthetic_df[col] = [
@@ -81,8 +92,8 @@ def run_numeric_pipeline(real_df, semantic_map, num_rows):
             for d in np.random.randint(0, delta_days + 1, size=num_rows)
         ]
 
-    # ----------------- APPLY RAG + BUSINESS RULES -----------------
-    constraints = fetch_constraints(context=None)
+    # ----------------- APPLY BUSINESS RULES -----------------
+    constraints = fetch_constraints()
     synthetic_df = apply_numeric_rules(synthetic_df, constraints)
 
     return synthetic_df
