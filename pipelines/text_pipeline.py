@@ -1,8 +1,6 @@
 import os
 import json
 import yaml
-import random
-
 from engines.llm_engine import generate_text
 from schema.column_types import SemanticType
 
@@ -20,25 +18,32 @@ BLOCKED_TYPES = {
 }
 
 
-# ----------------- DEDUPLICATION -----------------
 def deduplicate(texts):
     seen = set()
     final = []
-
     for t in texts:
         if t not in seen:
             final.append(t)
             seen.add(t)
         else:
             final.append(t + " ")
-
     return final
 
 
-# ----------------- TEXT PIPELINE -----------------
-def run_text_pipeline(semantic_map, real_df, num_rows):
+def _age_bucket(age):
+    if age < 22:
+        return "young adult / student"
+    if age < 35:
+        return "working professional"
+    if age < 50:
+        return "mid-career adult"
+    return "senior consumer"
+
+
+def run_text_pipeline(semantic_map, base_df, num_rows):
     """
-    Generates synthetic text columns using GPT in BATCH mode.
+    Row-aware text generation.
+    Each response is conditioned on Age, Gender, and City.
     """
 
     base_dir = os.getcwd()
@@ -55,70 +60,60 @@ def run_text_pipeline(semantic_map, real_df, num_rows):
 
     text_data = {}
 
-    # -------- Generate text column-wise --------
+    # -------- Generate text columns --------
     for col, sem_type in semantic_map.items():
 
-        # 🚫 Hard block
         if sem_type in BLOCKED_TYPES:
             continue
 
-        # Only TEXT columns allowed
-        if sem_type not in (
-            SemanticType.TEXT_SHORT,
-            SemanticType.TEXT_LONG,
-        ):
+        if sem_type not in (SemanticType.TEXT_SHORT, SemanticType.TEXT_LONG):
             continue
 
         col_cfg = column_prompts.get(col, {})
         instruction = col_cfg.get(
             "instruction",
-            f"Write a realistic response for the column '{col}'."
+            f"Write a realistic response for '{col}'."
         )
 
-        # -------- Persona mixing --------
-        persona_block = "\n".join(
-            [
-                f"- {p['name']}: {', '.join(p.get('traits', []))}"
-                for p in personas
-            ]
-        )
+        prompts = []
 
-        # -------- Single batched prompt --------
-        full_prompt = f"""
+        # -------- Build row-aware prompts --------
+        for i in range(num_rows):
+            row = base_df.iloc[i]
+
+            age = row.get("Age", None)
+            gender = row.get("Gender", "Unknown")
+            city = row.get("City", "an Indian city")
+
+            age_desc = _age_bucket(age) if age is not None else "adult"
+
+            persona = personas[i % len(personas)]
+
+            row_prompt = f"""
 {base_prompt}
 
-Personas:
-{persona_block}
+Context:
+- Age group: {age_desc}
+- Gender: {gender}
+- City: {city}
+- Lifestyle persona: {persona['name']} ({', '.join(persona.get('traits', []))})
 
-Instructions:
-- Generate {num_rows} UNIQUE responses
-- Each response must sound like a different person
-- Avoid repetition in tone, structure, and wording
-- Keep answers realistic and grounded
-- DO NOT number the responses
+Rules:
+- Response must align with the context above
+- Use culturally appropriate references
+- Do not mention the city explicitly unless natural
+- Sound like a real individual, not a survey
 
 Task:
 {instruction}
 """
+            prompts.append(row_prompt)
 
         # -------- Batched generation --------
-        try:
-            outputs = generate_text(
-                prompt=full_prompt,
-                n=num_rows
-            )
-        except Exception as e:
-            raise RuntimeError(
-                f"LLM generation failed for column '{col}': {e}"
-            )
-
-        if len(outputs) != num_rows:
-            raise ValueError(
-                f"Expected {num_rows} texts for '{col}', got {len(outputs)}"
-            )
+        outputs = generate_text(prompts, n=len(prompts))
 
         text_data[col] = deduplicate(
-            [t.strip() for t in outputs]
+            [o.strip() for o in outputs]
         )
 
     return text_data
