@@ -1,11 +1,12 @@
 import os
 import json
 import yaml
+import numpy as np
 from engines.llm_engine import generate_text
 from schema.column_types import SemanticType
 
 
-# ----------------- GPT MUST NEVER TOUCH THESE -----------------
+# ----------------- BLOCKED TYPES -----------------
 BLOCKED_TYPES = {
     SemanticType.IDENTIFIER,
     SemanticType.NUMERIC_CONTINUOUS,
@@ -18,37 +19,33 @@ BLOCKED_TYPES = {
 }
 
 
-def deduplicate(texts):
-    seen = set()
-    final = []
-    for t in texts:
-        if t not in seen:
-            final.append(t)
-            seen.add(t)
-        else:
-            final.append(t + " ")
-    return final
-
-
 def _age_bucket(age):
     if age < 22:
-        return "young adult / student"
+        return "young adult"
     if age < 35:
         return "working professional"
     if age < 50:
         return "mid-career adult"
-    return "senior consumer"
+    return "older adult"
+
+
+def _truncate_to_length(text: str, max_chars: int) -> str:
+    """
+    Hard safety net to prevent overlong text.
+    """
+    if len(text) <= max_chars:
+        return text
+    return text[:max_chars].rsplit(" ", 1)[0]
 
 
 def run_text_pipeline(semantic_map, base_df, num_rows):
     """
-    Row-aware text generation.
-    Each response is conditioned on Age, Gender, and City.
+    Row-aware + length-controlled text generation.
     """
 
     base_dir = os.getcwd()
 
-    # -------- Load prompt assets --------
+    # -------- Load assets --------
     with open(os.path.join(base_dir, "prompts/base_prompt.txt"), "r") as f:
         base_prompt = f.read()
 
@@ -59,6 +56,18 @@ def run_text_pipeline(semantic_map, base_df, num_rows):
         column_prompts = yaml.safe_load(f)
 
     text_data = {}
+
+    # -------- Learn length distribution from input --------
+    length_profile = {}
+
+    for col, sem in semantic_map.items():
+        if sem in (SemanticType.TEXT_SHORT, SemanticType.TEXT_LONG):
+            real_lengths = base_df[col].dropna().astype(str).str.len()
+            if not real_lengths.empty:
+                length_profile[col] = {
+                    "mean": int(real_lengths.mean()),
+                    "max": int(real_lengths.quantile(0.9))
+                }
 
     # -------- Generate text columns --------
     for col, sem_type in semantic_map.items():
@@ -72,48 +81,53 @@ def run_text_pipeline(semantic_map, base_df, num_rows):
         col_cfg = column_prompts.get(col, {})
         instruction = col_cfg.get(
             "instruction",
-            f"Write a realistic response for '{col}'."
+            f"Write a short, realistic response for '{col}'."
         )
+
+        mean_len = length_profile.get(col, {}).get("mean", 120)
+        max_len = length_profile.get(col, {}).get("max", mean_len + 30)
 
         prompts = []
 
-        # -------- Build row-aware prompts --------
         for i in range(num_rows):
             row = base_df.iloc[i]
 
-            age = row.get("Age", None)
+            age = row.get("Age", 30)
             gender = row.get("Gender", "Unknown")
             city = row.get("City", "an Indian city")
 
-            age_desc = _age_bucket(age) if age is not None else "adult"
-
             persona = personas[i % len(personas)]
 
-            row_prompt = f"""
+            prompts.append(
+                f"""
 {base_prompt}
 
 Context:
-- Age group: {age_desc}
+- Age group: {_age_bucket(age)}
 - Gender: {gender}
 - City: {city}
-- Lifestyle persona: {persona['name']} ({', '.join(persona.get('traits', []))})
+- Persona: {persona['name']} ({', '.join(persona.get('traits', []))})
 
-Rules:
-- Response must align with the context above
-- Use culturally appropriate references
-- Do not mention the city explicitly unless natural
-- Sound like a real individual, not a survey
+STRICT OUTPUT RULES:
+- Keep response between {int(mean_len*0.8)} and {int(mean_len*1.2)} characters
+- Never exceed {max_len} characters
+- Use 1 sentence only
+- Survey-style tone (not essay)
 
 Task:
 {instruction}
 """
-            prompts.append(row_prompt)
+            )
 
-        # -------- Batched generation --------
         outputs = generate_text(prompts, n=len(prompts))
 
-        text_data[col] = deduplicate(
-            [o.strip() for o in outputs]
-        )
+        # -------- Enforce length strictly --------
+        final_texts = []
+        for t in outputs:
+            t = t.strip()
+            t = _truncate_to_length(t, max_len)
+            final_texts.append(t)
+
+        text_data[col] = final_texts
 
     return text_data
