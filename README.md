@@ -105,3 +105,104 @@ synthetic-data-platform/
 └── .streamlit/
     └── config.toml           # UI theme & layout
 
+```
+---
+
+##1️⃣ Real Dataset
+
+What it is:
+- Your original CSV (real data).
+
+Role:
+- Used only to learn patterns
+- Never copied row-by-row
+
+##2️⃣ Schema Profiler
+
+What it does:
+- Looks at each column
+- Decides what kind of data it is
+
+Examples:
+- Age → numeric
+- City → categorical
+- Name → PII
+- Feedback → text
+
+Why important:
+- This decides which engine is allowed to touch which column.
+
+##3️⃣ SDV Engine (Statistics)
+
+What it handles:
+- Numeric & categorical structure
+- Distributions (mean, variance, frequency)
+
+Examples:
+- Age distribution
+- Spend patterns
+- Usage frequency
+
+Output:
+- A structural skeleton of the dataset.
+
+##4️⃣ RAG Engine (Rules & Knowledge)
+
+What it does:
+- Injects business/domain rules
+- Prevents unrealistic values
+
+Examples:
+- Age limits
+- Spend caps
+- Domain logic
+
+Why needed:
+- Pure statistics can be unrealistic — rules fix that.
+
+##5️⃣ Faker Engine (PII)
+
+What it handles:
+- Names
+- Emails
+- IDs
+
+Key rule:
+- Never uses real identities
+- Fully synthetic, privacy-safe
+
+##6️⃣ GPT LLM Engine (Text / Q&A)
+
+What it does:
+- Generates human-like text
+- Uses row context (age, city, gender)
+
+Examples:
+- Feedback
+- Opinions
+- Comments
+
+Controls:
+- Length constraints
+- Persona guidance
+- No PII access
+
+##7️⃣ Validator & Merger
+
+What it does:
+- Merges outputs from all engines
+- Checks schema consistency
+- Ensures column order & types
+
+Why important:
+- Prevents silent data corruption.
+
+##8️⃣ Synthetic Data
+
+Final result:
+- Looks real
+- No real identities
+- Same structure as input
+- Safe to share and use
+
+
