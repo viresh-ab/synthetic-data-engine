@@ -15,7 +15,7 @@ from pipelines.text_pipeline import run_text_pipeline
 from pipelines.hybrid_pipeline import merge_outputs
 
 from validation.schema_validator import validate_schema
-from validation.quality_metrics import generate_quality_report
+# from validation.quality_metrics import generate_quality_report
 
 
 # ------------------ UI CONFIG ------------------
@@ -87,7 +87,7 @@ if st.button("Generate Synthetic Data", type="primary"):
             pii_data = run_pii_pipeline(
                 semantic_map=semantic_map,
                 num_rows=num_rows,
-                base_df=numeric_df   # <-- contains Gender
+                base_df=numeric_df
             )
         except Exception as e:
             st.error(f"PII pipeline failed: {e}")
@@ -105,12 +105,13 @@ if st.button("Generate Synthetic Data", type="primary"):
             st.error(f"Merge (numeric + PII) failed: {e}")
             st.stop()
 
-        # -------- STEP 5: Text (row-aware GPT) --------
+        # -------- STEP 5: Text (row-aware + length-controlled) --------
         try:
             text_data = run_text_pipeline(
                 semantic_map=semantic_map,
-                base_df=synthetic_df,  # <-- row-coherent
-                num_rows=num_rows
+                base_df=synthetic_df,   # context
+                num_rows=num_rows,
+                real_df=real_df         # length learning
             )
         except Exception as e:
             st.error(f"Text pipeline failed: {e}")
@@ -140,11 +141,6 @@ if st.button("Generate Synthetic Data", type="primary"):
 
     st.subheader("🧪 Synthetic Data Preview")
     st.dataframe(synthetic_df.head())
-
-    # ------------------ QUALITY METRICS ------------------
-    # st.subheader("📊 Quality Metrics")
-    # quality_report = generate_quality_report(real_df, synthetic_df)
-    # st.json(quality_report)
 
     # ------------------ DOWNLOAD ------------------
     st.download_button(
