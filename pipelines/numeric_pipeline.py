@@ -8,12 +8,26 @@ from engines.rule_engine import apply_numeric_rules
 from schema.column_types import SemanticType
 
 
+def _infer_date_format(series: pd.Series) -> str:
+    """
+    Infer date format from input data.
+    Fallback to MM/DD/YYYY if unclear.
+    """
+    sample = series.dropna().astype(str).head(5)
+
+    for val in sample:
+        if "/" in val:
+            return "%m/%d/%Y"
+        if "-" in val:
+            return "%Y-%m-%d"
+
+    return "%m/%d/%Y"
+
+
 def run_numeric_pipeline(real_df, semantic_map, num_rows):
     """
     Generates synthetic numeric, categorical, and date data.
-    - Numeric → SDV
-    - Categorical → sampled ONLY from real values
-    - Date → uniform sampling within real range
+    Ensures output schema matches input schema.
     """
 
     numeric_cols = []
@@ -22,7 +36,6 @@ def run_numeric_pipeline(real_df, semantic_map, num_rows):
 
     # ----------------- Column routing -----------------
     for col, sem in semantic_map.items():
-
         if sem in (
             SemanticType.NUMERIC_CONTINUOUS,
             SemanticType.NUMERIC_DISCRETE,
@@ -41,10 +54,10 @@ def run_numeric_pipeline(real_df, semantic_map, num_rows):
     if numeric_cols:
         numeric_real = real_df[numeric_cols].copy()
 
-        # SDV safety
         numeric_real = numeric_real.apply(
             pd.to_numeric, errors="coerce"
         )
+
         numeric_real = numeric_real.fillna(
             numeric_real.median(numeric_only=True)
         )
@@ -72,7 +85,7 @@ def run_numeric_pipeline(real_df, semantic_map, num_rows):
             p=probs.values
         )
 
-    # ----------------- DATE -----------------
+    # ----------------- DATE (FORMAT PRESERVING) -----------------
     for col in date_cols:
         real_dates = pd.to_datetime(
             real_df[col],
@@ -87,10 +100,16 @@ def run_numeric_pipeline(real_df, semantic_map, num_rows):
         max_date = real_dates.max()
         delta_days = (max_date - min_date).days
 
-        synthetic_df[col] = [
-            (min_date + timedelta(days=int(d))).date()
+        synthetic_dates = [
+            min_date + timedelta(days=int(d))
             for d in np.random.randint(0, delta_days + 1, size=num_rows)
         ]
+
+        # ---- format exactly like input ----
+        date_format = _infer_date_format(real_df[col])
+        synthetic_df[col] = pd.to_datetime(
+            synthetic_dates
+        ).dt.strftime(date_format)
 
     # ----------------- APPLY BUSINESS RULES -----------------
     constraints = fetch_constraints()
