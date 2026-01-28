@@ -108,98 +108,98 @@ synthetic-data-platform/
 ```
 ---
 
-##1️⃣ Real Dataset
+## 1️⃣ Real Dataset
 
-What it is:
+#### What it is:
 - Your original CSV (real data).
 
-Role:
+#### Role:
 - Used only to learn patterns
 - Never copied row-by-row
 
-##2️⃣ Schema Profiler
+## 2️⃣ Schema Profiler
 
-What it does:
+#### What it does:
 - Looks at each column
 - Decides what kind of data it is
 
-Examples:
+#### Examples:
 - Age → numeric
 - City → categorical
 - Name → PII
 - Feedback → text
 
-Why important:
+#### Why important:
 - This decides which engine is allowed to touch which column.
 
-##3️⃣ SDV Engine (Statistics)
+## 3️⃣ SDV Engine (Statistics)
 
-What it handles:
+#### What it handles:
 - Numeric & categorical structure
 - Distributions (mean, variance, frequency)
 
-Examples:
+#### Examples:
 - Age distribution
 - Spend patterns
 - Usage frequency
 
-Output:
+#### Output:
 - A structural skeleton of the dataset.
 
-##4️⃣ RAG Engine (Rules & Knowledge)
+## 4️⃣ RAG Engine (Rules & Knowledge)
 
-What it does:
+#### What it does:
 - Injects business/domain rules
 - Prevents unrealistic values
 
-Examples:
+#### Examples:
 - Age limits
 - Spend caps
 - Domain logic
 
-Why needed:
+#### Why needed:
 - Pure statistics can be unrealistic — rules fix that.
 
-##5️⃣ Faker Engine (PII)
+## 5️⃣ Faker Engine (PII)
 
-What it handles:
+#### What it handles:
 - Names
 - Emails
 - IDs
 
-Key rule:
+#### Key rule:
 - Never uses real identities
 - Fully synthetic, privacy-safe
 
-##6️⃣ GPT LLM Engine (Text / Q&A)
+## 6️⃣ GPT LLM Engine (Text / Q&A)
 
-What it does:
+#### What it does:
 - Generates human-like text
 - Uses row context (age, city, gender)
 
-Examples:
+#### Examples:
 - Feedback
 - Opinions
 - Comments
 
-Controls:
+#### Controls:
 - Length constraints
 - Persona guidance
 - No PII access
 
-##7️⃣ Validator & Merger
+## 7️⃣ Validator & Merger
 
-What it does:
+#### What it does:
 - Merges outputs from all engines
 - Checks schema consistency
 - Ensures column order & types
 
-Why important:
+#### Why important:
 - Prevents silent data corruption.
 
-##8️⃣ Synthetic Data
+## 8️⃣ Synthetic Data
 
-Final result:
+#### Final result:
 - Looks real
 - No real identities
 - Same structure as input
