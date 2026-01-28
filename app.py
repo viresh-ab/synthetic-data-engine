@@ -142,9 +142,9 @@ if st.button("Generate Synthetic Data", type="primary"):
     st.dataframe(synthetic_df.head())
 
     # ------------------ QUALITY METRICS ------------------
-    # st.subheader("📊 Quality Metrics")
-    # quality_report = generate_quality_report(real_df, synthetic_df)
-    # st.json(quality_report)
+    st.subheader("📊 Quality Metrics")
+    quality_report = generate_quality_report(real_df, synthetic_df)
+    st.json(quality_report)
 
     # ------------------ DOWNLOAD ------------------
     st.download_button(
