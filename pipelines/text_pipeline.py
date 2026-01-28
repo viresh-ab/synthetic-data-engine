@@ -30,17 +30,16 @@ def _age_bucket(age):
 
 
 def _truncate_to_length(text: str, max_chars: int) -> str:
-    """
-    Hard safety net to prevent overlong text.
-    """
     if len(text) <= max_chars:
         return text
     return text[:max_chars].rsplit(" ", 1)[0]
 
 
-def run_text_pipeline(semantic_map, base_df, num_rows):
+def run_text_pipeline(semantic_map, base_df, num_rows, real_df):
     """
     Row-aware + length-controlled text generation.
+    - Length learned from REAL data
+    - Context taken from SYNTHETIC rows
     """
 
     base_dir = os.getcwd()
@@ -57,12 +56,12 @@ def run_text_pipeline(semantic_map, base_df, num_rows):
 
     text_data = {}
 
-    # -------- Learn length distribution from input --------
+    # -------- Learn length distribution from REAL input --------
     length_profile = {}
 
     for col, sem in semantic_map.items():
-        if sem in (SemanticType.TEXT_SHORT, SemanticType.TEXT_LONG):
-            real_lengths = base_df[col].dropna().astype(str).str.len()
+        if sem in (SemanticType.TEXT_SHORT, SemanticType.TEXT_LONG) and col in real_df.columns:
+            real_lengths = real_df[col].dropna().astype(str).str.len()
             if not real_lengths.empty:
                 length_profile[col] = {
                     "mean": int(real_lengths.mean()),
@@ -121,7 +120,6 @@ Task:
 
         outputs = generate_text(prompts, n=len(prompts))
 
-        # -------- Enforce length strictly --------
         final_texts = []
         for t in outputs:
             t = t.strip()
